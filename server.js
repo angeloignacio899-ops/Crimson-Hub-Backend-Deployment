@@ -9,6 +9,7 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import http from "http"; // <-- add this
 import { Server as SocketIOServer } from "socket.io"; // <-- add this
+import db from "./database/database.js";
 
 // --- Routes ---
 import authRoutes from "./routes/auth.js";
@@ -81,6 +82,17 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/comments", commentsRouter);
 app.use("/api", dashboardCountRoutes);
 app.post("/auth/google/signup", googleSignup);
+
+// Health check route for deployment platforms (keeps it lightweight)
+app.get("/", async (req, res) => {
+  try {
+    // quick DB check
+    await db.query("SELECT 1");
+    return res.status(200).json({ status: "ok", db: "connected", uptime: process.uptime() });
+  } catch (err) {
+    return res.status(200).json({ status: "ok", db: "unreachable", error: err.message });
+  }
+});
 
 // --- Create HTTP server for Socket.IO ---
 const server = http.createServer(app);
