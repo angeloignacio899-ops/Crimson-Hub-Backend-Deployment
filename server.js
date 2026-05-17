@@ -38,6 +38,9 @@ app.use(helmet({
       imgSrc: ["'self'", "data:", "https:"],
     },
   },
+  // Allow cross-origin resource sharing for static assets (images) so
+  // frontend apps hosted on a different origin can load them.
+  crossOriginResourcePolicy: { policy: 'cross-origin' }
 }));
 
 const limiter = rateLimit({
@@ -64,9 +67,17 @@ app.use((err, req, res, next) => {
 });
 
 // --- Static folders ---
-app.use("/uploads/profiles", express.static(path.join(path.resolve(), "uploads/profiles")));
-app.use("/uploads/events", express.static(path.join(path.resolve(), "uploads/events")));
-app.use("/uploads/announcements", express.static(path.join(path.resolve(), "uploads/announcements")));
+// Add lightweight CORS headers specifically for static upload routes
+const uploadCors = (req, res, next) => {
+  const origin = process.env.FRONTEND_URL || '*';
+  res.header('Access-Control-Allow-Origin', origin);
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+};
+
+app.use("/uploads/profiles", uploadCors, express.static(path.join(path.resolve(), "uploads/profiles")));
+app.use("/uploads/events", uploadCors, express.static(path.join(path.resolve(), "uploads/events")));
+app.use("/uploads/announcements", uploadCors, express.static(path.join(path.resolve(), "uploads/announcements")));
 
 // --- Routes ---
 app.use("/api/auth", authRoutes);
