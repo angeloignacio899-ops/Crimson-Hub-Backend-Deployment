@@ -7,3 +7,5 @@ dist/
 build/
 uploads/
 *.log
+.env.production.example
+.env.example
